@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Calculadora de Preço e Lucro | Para todo tipo de negócio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF1F7; --surface:#FFFFFF; --ink:#1C2240; --muted:#5B6382; --line:#D6DBE8;
+  --field:#F6F8FC; --sun:#FFC53D; --profit:#128656; --loss:#C8324E; --warn:#C98A00;
+  --tag:#1C2240; --tag-ink:#F3F5FC; --tag-muted:#A9B0CF; --tag-line:#343C66;
+  --c-mat:#4C82EE; --c-mo:#A86BE6; --c-fixo:#F08A3C; --c-taxa:#E2557A; --c-lucro:#22A970;
+  --cat:#4C82EE;
+  --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"Figtree","Segoe UI",system-ui,-apple-system,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11142A; --surface:#1A1F3A; --ink:#E8EBF7; --muted:#A1A8C6; --line:#2E3558;
+    --field:#141831; --profit:#3FCB8D; --loss:#FF6B85; --warn:#FFC53D; --tag:#262E57; --tag-line:#3A4372;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11142A; --surface:#1A1F3A; --ink:#E8EBF7; --muted:#A1A8C6; --line:#2E3558;
+  --field:#141831; --profit:#3FCB8D; --loss:#FF6B85; --warn:#FFC53D; --tag:#262E57; --tag-line:#3A4372;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--sun);outline-offset:2px;border-radius:6px}
+.wrap{max-width:1200px;margin:0 auto;padding:28px 20px 64px}
+
+/* Topo */
+.top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:end;margin-bottom:26px}
+@media (max-width:760px){.top{grid-template-columns:1fr}}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(2.1rem,5.4vw,3.6rem);line-height:1;letter-spacing:-.025em;margin:0 0 12px;max-width:16ch}
+.lede{color:var(--muted);font-size:1.08rem;margin:0;max-width:58ch}
+.selo{display:flex;gap:10px}
+.selo div{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 16px;text-align:center;min-width:96px}
+.selo b{display:block;font-family:var(--display);font-size:1.7rem;line-height:1}
+.selo span{font-size:.8rem;color:var(--muted)}
+
+/* Seletor de área */
+.areas{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:20px;margin-bottom:28px}
+.areas h2{font-family:var(--display);font-size:1.3rem;margin:0 0 12px}
+.cats{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.cat{border:1.5px solid var(--line);background:transparent;border-radius:999px;padding:8px 14px;cursor:pointer;font-weight:600;font-size:.93rem;display:inline-flex;align-items:center;gap:7px}
+.cat i{width:10px;height:10px;border-radius:50%;background:var(--cc)}
+.cat:hover{border-color:var(--cc)}
+.cat[aria-pressed="true"]{background:var(--cc);border-color:var(--cc);color:#fff}
+.cat[aria-pressed="true"] i{background:#fff}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.card{position:relative;border:1.5px solid var(--line);background:var(--field);border-radius:16px;padding:14px 12px 12px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:4px;min-height:118px}
+.card .ico{font-size:1.9rem;line-height:1;margin-bottom:4px}
+.card b{font-size:.95rem;line-height:1.2}
+.card span{font-size:.78rem;color:var(--muted);line-height:1.3}
+.card:hover{border-color:var(--cc)}
+.card[aria-pressed="true"]{border-color:var(--cc);background:var(--surface);box-shadow:inset 0 -5px 0 var(--cc)}
+.card[aria-pressed="true"]::after{content:"✓";position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:50%;background:var(--cc);color:#fff;font-size:.8rem;display:grid;place-items:center;font-weight:700}
+
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:28px;align-items:start}
+@media (max-width:980px){.grid{grid-template-columns:1fr}.aside{order:-1}}
+
+/* Formulário */
+.dica{display:flex;gap:12px;align-items:flex-start;background:color-mix(in srgb,var(--cat) 12%,var(--surface));border:1px solid color-mix(in srgb,var(--cat) 35%,transparent);border-radius:16px;padding:14px 16px;margin-bottom:16px;font-size:.95rem}
+.dica .ico{font-size:1.5rem;line-height:1}
+.dica b{display:block;margin-bottom:2px}
+.bloco{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px 22px 18px;margin-bottom:16px;border-left:6px solid var(--bc,var(--line))}
+.bloco h2{font-family:var(--display);font-weight:700;font-size:1.25rem;margin:0 0 4px;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+.bloco h2 .chip{margin-left:auto;font-family:var(--body);font-size:.9rem;font-weight:700;background:color-mix(in srgb,var(--bc) 14%,transparent);color:var(--ink);padding:3px 10px;border-radius:999px;font-variant-numeric:tabular-nums}
+.bloco .ajuda{color:var(--muted);font-size:.92rem;margin:0 0 16px;max-width:62ch}
+.campos{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+label.c{display:flex;flex-direction:column;gap:5px;font-size:.86rem;font-weight:600;color:var(--muted)}
+.inp{display:flex;align-items:center;background:var(--field);border:1.5px solid var(--line);border-radius:10px;padding:0 11px;min-height:44px}
+.inp:focus-within{border-color:var(--ink)}
+.inp span{color:var(--muted);font-size:.9rem;white-space:nowrap}
+.inp input{border:0;background:transparent;outline:none;width:100%;min-width:0;padding:10px 6px;font-weight:600;font-size:1rem;color:var(--ink)}
+.inp input::placeholder{color:var(--muted);font-weight:400}
+.linhas{display:flex;flex-direction:column;gap:10px}
+.linha{display:grid;gap:8px;align-items:end}
+.linha.mat{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1fr) 92px 40px}
+.linha.dois{grid-template-columns:minmax(0,2fr) minmax(0,1fr) 40px}
+.linha .lbl{font-size:.78rem;font-weight:600;color:var(--muted);margin-bottom:4px;display:block}
+.linha .por{font-size:.82rem;color:var(--muted);padding-bottom:12px;text-align:right;font-variant-numeric:tabular-nums}
+.linha .por b{color:var(--ink);font-weight:700;display:block}
+.del{width:40px;height:44px;border:1.5px solid var(--line);background:transparent;border-radius:10px;cursor:pointer;color:var(--muted);font-size:1.15rem;line-height:1}
+.del:hover{color:var(--loss);border-color:var(--loss)}
+.add{margin-top:12px;border:1.5px dashed var(--line);background:transparent;border-radius:10px;padding:10px 14px;cursor:pointer;font-weight:600;color:var(--muted);width:100%}
+.add:hover{border-color:var(--ink);color:var(--ink)}
+.total{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;font-size:.95rem;color:var(--muted)}
+.total b{color:var(--ink);font-variant-numeric:tabular-nums}
+.tempo{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.tempo button{border:1px solid var(--line);background:var(--field);border-radius:999px;padding:4px 11px;font-size:.82rem;cursor:pointer;color:var(--muted)}
+.tempo button:hover{border-color:var(--ink);color:var(--ink)}
+@media (max-width:640px){
+  .linha.mat{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 40px;grid-template-areas:"n n x" "p r r" "u u u"}
+  .linha.mat .f-n{grid-area:n}.linha.mat .f-p{grid-area:p}.linha.mat .f-r{grid-area:r}.linha.mat .por{grid-area:u;text-align:left;padding:0}.linha.mat .del{grid-area:x}
+  .linha.mat .por b{display:inline;margin-left:4px}
+  .linha{padding-bottom:12px;border-bottom:1px solid var(--line)}
+  .linha:last-child{border-bottom:0;padding-bottom:0}
+}
+
+/* Etiqueta de preço */
+.aside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px)}
+@media (max-width:980px){.aside{position:static}}
+.etiqueta{background:var(--tag);color:var(--tag-ink);border-radius:22px;padding:36px 24px 22px;position:relative;
+  clip-path:polygon(18% 0,82% 0,100% 6%,100% 100%,0 100%,0 6%)}
+.etiqueta::before{content:"";position:absolute;top:14px;left:50%;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:var(--bg);box-shadow:inset 0 0 0 2px var(--tag-line)}
+.etiqueta.flip{animation:flip .55s cubic-bezier(.3,1.4,.5,1)}
+@keyframes flip{0%{transform:rotate(-3deg) translateY(-6px)}100%{transform:none}}
+@media (prefers-reduced-motion:reduce){.etiqueta.flip{animation:none}}
+.produto-nome{text-align:center;font-size:.92rem;color:var(--tag-muted);margin:4px 0 2px}
+.preco-grande{font-family:var(--display);font-weight:800;text-align:center;font-size:clamp(3rem,8vw,4.3rem);line-height:1;letter-spacing:-.03em;color:var(--sun);font-variant-numeric:tabular-nums;display:flex;justify-content:center;align-items:baseline;gap:6px}
+.preco-grande small{font-size:.38em;font-weight:700;color:var(--tag-muted)}
+.preco-grande input{width:5.4ch;background:transparent;border:0;border-bottom:2px dashed transparent;color:inherit;font:inherit;letter-spacing:inherit;text-align:center;padding:0}
+.preco-grande input:hover,.preco-grande input:focus{border-bottom-color:var(--tag-line);outline:none}
+.slider{width:100%;margin:14px 0 4px;accent-color:var(--sun);height:28px;cursor:pointer}
+.limites{display:flex;justify-content:space-between;font-size:.78rem;color:var(--tag-muted)}
+.sugestoes{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:14px 0 4px}
+.sug{background:transparent;border:1.5px solid var(--tag-line);color:var(--tag-ink);border-radius:12px;padding:8px 4px;cursor:pointer;text-align:center;line-height:1.2}
+.sug em{display:block;font-style:normal;font-size:.72rem;color:var(--tag-muted)}
+.sug b{display:block;font-size:1rem;font-variant-numeric:tabular-nums;margin:2px 0}
+.sug span{font-size:.72rem;color:var(--tag-muted)}
+.sug:hover:not(:disabled){border-color:var(--sun)}
+.sug.ativo{border-color:var(--sun);background:rgba(255,197,61,.12)}
+.sug:disabled{opacity:.4;cursor:not-allowed}
+
+.termo{margin-top:18px}
+.termo-top{display:flex;justify-content:space-between;align-items:baseline;font-size:.86rem;color:var(--tag-muted);margin-bottom:6px}
+.termo-top b{font-size:1rem;color:var(--tag-ink)}
+.termo-bar{position:relative;height:12px;border-radius:6px;background:linear-gradient(90deg,#E2557A 0 20%,#F2B33D 20% 40%,#7FD39B 40% 60%,#22A970 60% 100%)}
+.termo-bar .pin{position:absolute;top:-5px;width:6px;height:22px;margin-left:-3px;border-radius:3px;background:#fff;box-shadow:0 0 0 2px var(--tag);transition:left .25s}
+.termo-esc{display:grid;grid-template-columns:20% 20% 20% 40%;font-size:.7rem;color:var(--tag-muted);margin-top:5px}
+.termo-esc span:last-child{text-align:right}
+
+.lucro-un{margin:18px 0 4px;text-align:center}
+.lucro-un .v{font-family:var(--display);font-weight:800;font-size:2.3rem;line-height:1.05;font-variant-numeric:tabular-nums}
+.lucro-un .s{font-size:.88rem;color:var(--tag-muted)}
+.pos{color:#5FE0A6}.neg{color:#FF8DA1}
+.numeros{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--tag-line);border:1px solid var(--tag-line);border-radius:14px;overflow:hidden;margin-top:16px}
+.numeros div{background:var(--tag);padding:11px 13px}
+.numeros dt{font-size:.78rem;color:var(--tag-muted)}
+.numeros dd{margin:0;font-weight:700;font-size:1.05rem;font-variant-numeric:tabular-nums}
+.qtd-box{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:16px;font-size:.92rem}
+.qtd-box .inp{background:rgba(255,255,255,.07);border-color:var(--tag-line);max-width:170px;min-height:40px}
+.qtd-box .inp input{color:var(--tag-ink);text-align:right}
+.qtd-box .inp span{color:var(--tag-muted)}
+.aviso{margin:14px 0 0;padding:12px 14px;border-radius:12px;font-size:.92rem;line-height:1.4;background:rgba(255,255,255,.06)}
+.aviso.ruim{background:rgba(255,107,133,.18)}
+.aviso.ok{background:rgba(63,203,141,.15)}
+.ir-painel{display:block;text-align:center;margin-top:14px;color:var(--sun);font-weight:600;font-size:.92rem;text-decoration:none}
+.ir-painel:hover{text-decoration:underline}
+
+/* Painel */
+.painel{margin-top:40px}
+.painel > h2{font-family:var(--display);font-size:clamp(1.6rem,3.6vw,2.3rem);letter-spacing:-.02em;margin:0 0 6px}
+.painel > p{color:var(--muted);margin:0 0 20px;max-width:62ch}
+.pgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:860px){.pgrid{grid-template-columns:1fr}}
+.pcard{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px 22px}
+.pcard h3{font-family:var(--display);font-size:1.15rem;margin:0 0 4px}
+.pcard .sub{color:var(--muted);font-size:.88rem;margin:0 0 14px}
+.pcard.largo{grid-column:1/-1}
+.donut-wrap{display:grid;grid-template-columns:200px minmax(0,1fr);gap:20px;align-items:center}
+@media (max-width:480px){.donut-wrap{grid-template-columns:1fr;justify-items:center}}
+.leg{list-style:none;margin:0;padding:0;width:100%}
+.leg li{display:grid;grid-template-columns:14px 1fr auto auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px dotted var(--line);font-size:.92rem;font-variant-numeric:tabular-nums}
+.leg li:last-child{border-bottom:0}
+.leg i{width:12px;height:12px;border-radius:4px;background:var(--c)}
+.leg .pct{color:var(--muted);min-width:3.2em;text-align:right}
+svg text{font-family:var(--body)}
+.chart-svg{width:100%;height:auto;display:block}
+.cenarios{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;align-items:end}
+.cen{text-align:center}
+.cen .col{height:150px;display:flex;align-items:flex-end;justify-content:center;border-bottom:2px solid var(--line)}
+.cen .col i{display:block;width:62%;max-width:70px;border-radius:10px 10px 0 0;background:var(--cc);transition:height .35s}
+.cen .val{font-weight:700;font-variant-numeric:tabular-nums;margin-top:8px}
+.cen .nm{font-size:.82rem;color:var(--muted)}
+.cen .pr{font-size:.82rem;color:var(--muted)}
+.meta-row{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.meta-row .inp{max-width:200px}
+.ring{position:relative;width:150px;height:150px;flex:none}
+.ring svg{transform:rotate(-90deg)}
+.ring .rc{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.ring .rc b{font-family:var(--display);font-size:1.7rem;line-height:1}
+.ring .rc span{font-size:.76rem;color:var(--muted)}
+.meta-res{flex:1;min-width:220px}
+.meta-res p{margin:0 0 8px}
+.meta-res strong{font-variant-numeric:tabular-nums}
+.minis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.minis div{background:var(--field);border-radius:12px;padding:10px;text-align:center}
+.minis b{display:block;font-family:var(--display);font-size:1.3rem;font-variant-numeric:tabular-nums}
+.minis span{font-size:.75rem;color:var(--muted)}
+.pay-track{position:relative;height:16px;border-radius:8px;background:var(--field);overflow:hidden;margin:14px 0 8px}
+.pay-track i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,var(--c-mat),var(--c-lucro));border-radius:8px;transition:width .35s}
+.pay-marks{display:flex;justify-content:space-between;font-size:.76rem;color:var(--muted)}
+
+.rodape{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;margin-top:30px;color:var(--muted);font-size:.88rem}
+.btn-sec{border:1.5px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 14px;cursor:pointer;font-weight:600}
+.btn-sec:hover{border-color:var(--ink)}
+@media print{.areas,.add,.del,.rodape button,.slider,.sugestoes,.tempo,.ir-painel{display:none}.aside{position:static}.grid,.pgrid{grid-template-columns:1fr}.etiqueta{clip-path:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Quanto você lucra em cada venda?</h1>
+      <p class="lede">Escolha sua área, ajuste os custos com os seus números e veja na hora o preço mínimo, o lucro do mês, quantas vendas pagam as contas e quando o investimento volta para o seu bolso.</p>
+    </div>
+    <div class="selo" aria-hidden="true">
+      <div><b id="n-areas">0</b><span>áreas prontas</span></div>
+      <div><b>100%</b><span>grátis e no celular</span></div>
+    </div>
+  </header>
+
+  <section class="areas" aria-labelledby="t-areas">
+    <h2 id="t-areas">Qual é o seu negócio?</h2>
+    <div class="cats" id="cats" role="group" aria-label="Categorias"></div>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <div class="grid">
+    <main>
+      <div class="dica" id="dica"></div>
+
+      <section class="bloco" style="--bc:var(--cat)">
+        <h2>Seu produto</h2>
+        <p class="ajuda">Dê um nome e diga como você chama cada venda: unidade, pote, kit, atendimento, aula…</p>
+        <div class="campos">
+          <label class="c">Produto ou serviço<div class="inp"><input id="produto" type="text" autocomplete="off"></div></label>
+          <label class="c">Cada venda é um(a)<div class="inp"><input id="unidade" type="text" autocomplete="off"></div></label>
+        </div>
+      </section>
+
+      <section class="bloco" style="--bc:var(--c-mat)">
+        <h2>Materiais e insumos <span class="chip" id="c-mat">R$ 0,00</span></h2>
+        <p class="ajuda">Para cada item, coloque quanto você pagou e quantos produtos ele rende. Ex.: um pacote de R$ 59 que dá para 3.000 fotos. Inclua embalagem, etiqueta, gás e frete da compra.</p>
+        <div class="linhas" id="lista-mat"></div>
+        <button class="add" data-add="materiais" type="button">+ Adicionar material</button>
+        <div class="total"><span>Materiais por <span class="u-sing">unidade</span></span><b id="t-mat">R$ 0,00</b></div>
+      </section>
+
+      <section class="bloco" style="--bc:var(--c-mo)">
+        <h2>Sua mão de obra <span class="chip" id="c-mo">R$ 0,00</span></h2>
+        <p class="ajuda">Seu tempo também é custo. Quanto você quer ganhar por hora e quanto tempo leva para fazer uma <span class="u-sing">unidade</span>?</p>
+        <div class="campos">
+          <label class="c">Valor da sua hora<div class="inp"><span>R$</span><input id="hora" inputmode="decimal"></div></label>
+          <label class="c">Minutos por <span class="u-sing">unidade</span><div class="inp"><input id="min" inputmode="decimal"><span>min</span></div></label>
+        </div>
+        <div class="tempo" aria-label="Atalhos para o valor da hora">
+          <button type="button" data-hora="salario">Hora com base em 1 salário mínimo</button>
+          <button type="button" data-hora="2salarios">2 salários mínimos</button>
+          <button type="button" data-hora="3salarios">3 salários mínimos</button>
+        </div>
+        <div class="total"><span>Mão de obra por <span class="u-sing">unidade</span></span><b id="t-mo">R$ 0,00</b></div>
+      </section>
+
+      <section class="bloco" style="--bc:var(--c-fixo)">
+        <h2>Contas fixas do mês <span class="chip" id="c-fixo">R$ 0,00</span></h2>
+        <p class="ajuda">O que você paga todo mês, vendendo ou não: aluguel, luz, internet, MEI (DAS), anúncios. O valor é dividido pelas vendas do mês.</p>
+        <div class="linhas" id="lista-fixos"></div>
+        <button class="add" data-add="fixos" type="button">+ Adicionar conta fixa</button>
+        <div class="total"><span>Por <span class="u-sing">unidade</span> (total de <span id="t-fixo-mes">R$ 0,00</span> por mês)</span><b id="t-fixo">R$ 0,00</b></div>
+      </section>
+
+      <section class="bloco" style="--bc:var(--c-taxa)">
+        <h2>Taxas sobre a venda <span class="chip" id="c-taxa">0%</span></h2>
+        <p class="ajuda">Porcentagens cobradas em cima do preço: maquininha de cartão, marketplace (Shopee, Mercado Livre), app de entrega, impostos.</p>
+        <div class="linhas" id="lista-taxas"></div>
+        <button class="add" data-add="taxas" type="button">+ Adicionar taxa</button>
+        <div class="total"><span>Total de taxas</span><b id="t-taxas">0%</b></div>
+      </section>
+
+      <section class="bloco" style="--bc:var(--ink)">
+        <h2>Investimento inicial <span class="chip" id="c-inv">R$ 0</span></h2>
+        <p class="ajuda">Máquinas e equipamentos que você comprou para começar. Usamos para calcular em quanto tempo o negócio se paga.</p>
+        <div class="linhas" id="lista-invest"></div>
+        <button class="add" data-add="invest" type="button">+ Adicionar equipamento</button>
+        <div class="total"><span>Total investido</span><b id="t-invest">R$ 0,00</b></div>
+      </section>
+    </main>
+
+    <aside class="aside" aria-live="polite">
+      <div class="etiqueta" id="etiqueta">
+        <p class="produto-nome" id="tag-produto">Seu preço de venda</p>
+        <div class="preco-grande"><small>R$</small><input id="preco" inputmode="decimal" aria-label="Preço de venda"></div>
+        <input class="slider" id="slider" type="range" min="0" max="20" step="0.05" aria-label="Arraste para ajustar o preço">
+        <div class="limites"><span>R$ 0</span><span>Arraste e veja o lucro mudar</span><span id="slider-max">R$ 20</span></div>
+        <div class="sugestoes" id="sugestoes"></div>
+
+        <div class="termo">
+          <div class="termo-top"><span>Saúde da margem</span><b id="termo-txt">—</b></div>
+          <div class="termo-bar"><span class="pin" id="pin" style="left:0"></span></div>
+          <div class="termo-esc"><span>Prejuízo</span><span>Apertada</span><span>Boa</span><span>Excelente</span></div>
+        </div>
+
+        <div class="lucro-un">
+          <div class="v" id="r-lucro">R$ 0,00</div>
+          <div class="s" id="r-lucro-s">de lucro por unidade</div>
+        </div>
+        <div class="qtd-box">
+          <span>Vendas por mês</span>
+          <div class="inp"><input id="qtd" inputmode="numeric" aria-label="Quantidade vendida por mês"><span class="u-plur">unidades</span></div>
+        </div>
+        <dl class="numeros">
+          <div><dt>Lucro no mês</dt><dd id="r-lucro-mes">R$ 0</dd></div>
+          <div><dt>Faturamento no mês</dt><dd id="r-fat">R$ 0</dd></div>
+          <div><dt>Preço mínimo</dt><dd id="r-min">R$ 0</dd></div>
+          <div><dt>Vendas para pagar as contas</dt><dd id="r-pe">—</dd></div>
+        </dl>
+        <p class="aviso" id="aviso"></p>
+        <a class="ir-painel" href="#painel">Ver gráficos do seu negócio ↓</a>
+      </div>
+    </aside>
+  </div>
+
+  <section class="painel" id="painel">
+    <h2>O retrato do seu negócio</h2>
+    <p>Os gráficos se atualizam a cada número que você muda. Use para testar ideias antes de mexer no preço de verdade.</p>
+    <div class="pgrid">
+      <article class="pcard">
+        <h3>Para onde vai cada real</h3>
+        <p class="sub" id="donut-sub">Como o preço de venda se divide.</p>
+        <div class="donut-wrap">
+          <svg id="donut" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="Gráfico de rosca da composição do preço"></svg>
+          <ul class="leg" id="leg"></ul>
+        </div>
+      </article>
+
+      <article class="pcard">
+        <h3>Três preços, três resultados</h3>
+        <p class="sub">Lucro no mês com a mesma quantidade de vendas. Toque numa coluna para usar esse preço.</p>
+        <div class="cenarios" id="cenarios"></div>
+      </article>
+
+      <article class="pcard largo">
+        <h3>Lucro conforme as vendas do mês</h3>
+        <p class="sub" id="pe-sub">Abaixo da linha zero, as contas fixas ainda não foram pagas.</p>
+        <svg class="chart-svg" id="linha" viewBox="0 0 760 280" role="img" aria-label="Gráfico de lucro mensal por quantidade vendida"></svg>
+      </article>
+
+      <article class="pcard">
+        <h3>Sua meta de lucro</h3>
+        <p class="sub">Quanto você quer que sobre por mês, além do seu pagamento pela mão de obra?</p>
+        <div class="meta-row">
+          <div class="ring" id="ring"></div>
+          <div class="meta-res">
+            <label class="c">Meta de lucro mensal<div class="inp"><span>R$</span><input id="meta" inputmode="decimal"></div></label>
+            <p id="meta-txt" style="margin-top:10px"></p>
+          </div>
+        </div>
+        <div class="minis" id="minis"></div>
+      </article>
+
+      <article class="pcard">
+        <h3>Quando o investimento volta</h3>
+        <p class="sub" id="pay-sub">Tempo para recuperar o dinheiro dos equipamentos.</p>
+        <div class="pay-track"><i id="pay-bar" style="width:0"></i></div>
+        <div class="pay-marks" id="pay-marks"></div>
+        <p id="pay-txt" style="margin:14px 0 0"></p>
+      </article>
+    </div>
+  </section>
+
+  <div class="rodape">
+    <span>Os valores ficam salvos neste navegador. Os exemplos são estimativas; troque pelos preços da sua região.</span>
+    <span>
+      <button class="btn-sec" id="imprimir" type="button">Imprimir resumo</button>
+      <button class="btn-sec" id="limpar" type="button">Recomeçar do exemplo</button>
+    </span>
+  </div>
+</div>
+
+<script>
+(function(){
+const SALARIO=1621; /* referência para os atalhos de valor da hora; edite se mudar */
+const CATS={
+  alim:{rot:"Alimentação",cor:"#F08A3C"},
+  arte:{rot:"Artesanato",cor:"#E2557A"},
+  moda:{rot:"Moda e beleza",cor:"#A86BE6"},
+  rev:{rot:"Revenda",cor:"#22A970"},
+  serv:{rot:"Serviços",cor:"#4C82EE"},
+  zero:{rot:"Do zero",cor:"#5B6382"}
+};
+/* [cat, ícone, nome, produto, unidade, materiais[[n,pago,rende]], hora, min, fixos[[n,v]], taxas[[n,%]], invest[[n,v]], qtd, preço, dica] */
+const A={
+ confeitaria:["alim","🧁","Doces finos","Brigadeiro gourmet","unidade",[["Leite condensado",7.5,25],["Chocolate 50% (1 kg)",40,100],["Creme de leite",4,25],["Granulado belga",30,120],["Forminhas (100 un)",12,100],["Gás de cozinha",120,1000]],18,1.5,[["Energia e água",60],["MEI (DAS)",82]],[["Maquininha de cartão",3]],[["Batedeira",300],["Panelas e formas",150]],600,3.5,"Venda em caixas de 4, 6 ou 12. O kit pode ter margem maior que a unidade solta, e a embalagem bonita justifica o preço."],
+ bolos:["alim","🍰","Bolo de pote","Bolo de pote 250 ml","pote",[["Massa (farinha, açúcar, ovos)",25,20],["Recheio",30,15],["Cobertura de chocolate",40,30],["Pote com tampa (50 un)",55,50],["Colher e etiqueta",20,50],["Gás de cozinha",120,400]],18,6,[["Energia e água",60],["MEI (DAS)",82]],[["Maquininha de cartão",3]],[["Batedeira",300],["Forno elétrico",600]],250,12,"Ofereça um sabor fixo e um sabor do mês. A novidade faz o cliente voltar e você testa sabores sem desperdício."],
+ salgados:["alim","🥟","Salgados para festa","Cento de salgados fritos","cento",[["Massa (farinha, margarina)",35,3],["Recheio de frango e queijo",60,3],["Óleo",9,2],["Embalagem",25,25],["Gás de cozinha",120,40]],20,90,[["Energia e água",80],["MEI (DAS)",82]],[["Maquininha de cartão",3]],[["Fritadeira",400],["Freezer",2500]],40,85,"Venda também o salgado congelado para fritar em casa: dá menos trabalho na entrega e aproveita a produção em lote."],
+ marmitas:["alim","🍱","Marmitas","Marmita fit 400 g","marmita",[["Frango (1 kg)",22,6],["Arroz integral (1 kg)",9,12],["Legumes",15,6],["Temperos e óleo",20,40],["Embalagem (50 un)",45,50],["Gás de cozinha",120,300]],20,8,[["Energia e água",120],["MEI (DAS)",82]],[["App de entrega",12],["Maquininha de cartão",3]],[["Freezer",2500],["Panelas e utensílios",600]],300,22,"Planos semanais (5 ou 10 marmitas) garantem venda antecipada e ajudam a comprar ingredientes em maior quantidade."],
+ geladinho:["alim","🍧","Geladinho gourmet","Geladinho gourmet","unidade",[["Leite e leite condensado",15,20],["Fruta ou chocolate",20,25],["Saquinhos (100 un)",10,100]],15,2,[["Energia do freezer",80]],[["Pix e cartão",1]],[["Freezer horizontal",2000]],400,4,"No verão a procura dispara. Faça estoque antes e crie um sabor exclusivo para vender a um preço maior."],
+ lanches:["alim","🍔","Lanches e hambúrguer","Hambúrguer artesanal","lanche",[["Pão brioche (6 un)",18,6],["Blend de carne (1 kg)",45,6],["Queijo cheddar",40,25],["Salada e molhos",20,15],["Embalagem e sachês",70,50],["Gás de cozinha",120,400]],20,10,[["Energia e água",150],["MEI (DAS)",82],["Anúncios",150]],[["App de entrega",12],["Maquininha de cartão",3]],[["Chapa",900],["Freezer",2500]],400,32,"O combo (lanche + batata + bebida) aumenta o valor de cada pedido e dilui a taxa de entrega."],
+ fotoima:["arte","🧲","Personalizados","Foto ímã 5x5 cm","unidade",[["Insumo do botton (kit)",92,50],["Papel fotográfico (250 folhas)",59,3000],["Tinta da impressora (refil)",50,200],["Embalagem",10,100]],20,2,[["Energia elétrica",30]],[["Maquininha de cartão",3]],[["Máquina de botton",500],["Impressora",800]],100,8,"Venda em pacotes (9, 12, 20 fotos). Lembrancinhas de aniversário e casamento saem em grande quantidade de uma vez."],
+ velas:["arte","🕯️","Velas aromáticas","Vela aromática 150 g","vela",[["Cera de soja (1 kg)",45,6],["Essência",30,15],["Pavio (100 un)",25,100],["Pote de vidro",6,1],["Rótulo e embalagem",30,30]],25,15,[["Energia",40],["MEI (DAS)",82],["Anúncios",80]],[["Marketplace",14]],[["Panela e termômetro",250]],80,45,"Kits de presente (vela + sachê + cartão) vendem muito em datas comemorativas e têm margem melhor."],
+ sabonetes:["arte","🧼","Saboaria artesanal","Sabonete artesanal 100 g","sabonete",[["Base glicerinada (1 kg)",32,10],["Essência",25,30],["Corantes e aditivos",20,50],["Embalagem",30,50]],20,8,[["Energia",30],["MEI (DAS)",82]],[["Maquininha de cartão",3]],[["Formas de silicone",150],["Panela",100]],150,14,"Lembrancinhas para maternidade e casamento rendem pedidos grandes. Peça sinal de 50% para comprar o material."],
+ papelaria:["arte","✂️","Papelaria personalizada","Topo de bolo personalizado","topo",[["Papel fotográfico glitter",45,100],["Tinta",50,150],["Palitos",8,25],["Embalagem",15,50]],25,25,[["Energia",30],["Canva Pro e programas",35],["MEI (DAS)",82]],[["Maquininha de cartão",3]],[["Plotter de recorte",1800],["Impressora",800]],60,30,"Crie arquivos-base por tema. Depois só troca nome e idade, e o tempo por pedido cai bastante."],
+ croche:["arte","🧶","Crochê e amigurumi","Amigurumi pequeno","peça",[["Linha (novelo)",18,2],["Enchimento de fibra",20,10],["Olhos de segurança",15,15],["Embalagem",20,40]],20,180,[["MEI (DAS)",82]],[["Maquininha de cartão",3]],[["Kit de agulhas",80]],15,90,"Peças feitas à mão levam horas. Se o preço não cobre seu tempo, cobre por encomenda e venda receitas (PDF) como renda extra."],
+ imp3d:["arte","🖨️","Impressão 3D","Chaveiro personalizado 3D","chaveiro",[["Filamento PLA (1 kg)",110,120],["Argola",15,100],["Embalagem",15,100]],20,5,[["Energia",60]],[["Marketplace",14]],[["Impressora 3D",2500]],200,12,"A máquina trabalha sozinha. Calcule pelo seu tempo de preparo e acabamento, não pelas horas de impressão."],
+ costura:["moda","🧵","Costura","Ecobag personalizada","peça",[["Tecido algodão cru (1 m)",18,2],["Linha",8,20],["Alça (rolo)",25,25],["Etiqueta (100 un)",40,100],["Estampa transfer",3,1]],25,35,[["Energia elétrica",50],["MEI (DAS)",82]],[["Maquininha de cartão",3]],[["Máquina de costura",1200]],60,45,"Pedidos de empresas e eventos (brindes) costumam vir em lotes de 50 ou 100 peças. Tenha uma tabela de preço por quantidade."],
+ sobrancelha:["moda","✨","Sobrancelha","Design de sobrancelha com henna","atendimento",[["Henna",45,40],["Descartáveis",30,30],["Algodão e higienização",15,50]],40,40,[["Aluguel da sala",600],["Energia",80],["MEI (DAS)",82],["Anúncios no Instagram",100]],[["Maquininha de cartão",3]],[["Maca",700],["Pinças e iluminação",500]],120,45,"Agenda cheia é tudo em serviços. Pacotes mensais e lembrete de retorno pelo WhatsApp garantem clientes fiéis."],
+ manicure:["moda","💅","Manicure","Manicure e pedicure","atendimento",[["Esmaltes",40,40],["Descartáveis (lixa, palito, algodão)",35,25],["Removedor e cremes",30,40],["Esterilização",20,60]],35,60,[["Aluguel da cadeira",400],["Energia",50],["MEI (DAS)",82]],[["Maquininha de cartão",3]],[["Autoclave",900],["Cadeira",600]],100,60,"Serviços extras (spa dos pés, nail art) aumentam o valor do atendimento quase sem aumentar o custo."],
+ skincare:["rev","🧴","Cosméticos","Kit skincare","kit",[["Produto do fornecedor",38,1],["Caixa e laço (50 un)",60,50],["Frete da compra",40,20]],20,10,[["Internet e celular",100],["MEI (DAS)",82]],[["Marketplace",18]],[["Estoque inicial e expositor",1500]],50,79,"Em revenda, a margem vem da compra. Negocie desconto por quantidade e prefira produtos que o cliente recompra."],
+ semijoias:["rev","💍","Semijoias","Brinco semijoia","peça",[["Peça do fornecedor",22,1],["Cartela e saquinho",30,50],["Frete da compra",40,30]],20,5,[["Internet e celular",100],["MEI (DAS)",82],["Anúncios",100]],[["Maquininha de cartão",3]],[["Mostruário",600]],80,59,"Venda por consignação com revendedoras amplia seu alcance. Reserve parte do preço para a comissão delas."],
+ brecho:["rev","👗","Brechó","Peça de brechó","peça",[["Peça comprada em lote",8,1],["Lavagem e pequenos reparos",30,20],["Sacola e etiqueta",25,50]],20,15,[["Internet e celular",100],["MEI (DAS)",82]],[["Marketplace",14]],[["Arara e cabides",400],["Iluminação para fotos",200]],120,45,"Boas fotos vendem. Lives e lançamentos semanais criam urgência e giram o estoque mais rápido."],
+ aulas:["serv","📚","Aulas particulares","Aula particular de 1 hora","aula",[["Material impresso",20,10],["Transporte",12,1]],50,60,[["Internet e celular",100],["Programas e assinaturas",60],["MEI (DAS)",82]],[["Pix e cartão (média)",1.5]],[["Notebook",3500]],40,90,"Pacotes de 4 ou 8 aulas pagos adiantado reduzem faltas e deixam sua renda mais previsível."],
+ socialmedia:["serv","📱","Social media","Gestão de redes sociais","cliente",[["Banco de imagens e apps",60,6],["Deslocamento para reunião",20,1]],45,900,[["Internet",120],["Canva Pro e ferramentas",90],["MEI (DAS)",82]],[["Boleto e Pix",1]],[["Notebook",4000],["Celular",2000]],6,900,"Calcule as horas reais por cliente (posts, stories, reuniões, relatórios). Mais clientes nem sempre dá mais lucro."],
+ fotografia:["serv","📷","Fotografia","Ensaio fotográfico","ensaio",[["Deslocamento",40,1],["Backup em nuvem",50,10]],60,240,[["Programas de edição",110],["MEI (DAS)",82],["Anúncios",150]],[["Maquininha de cartão",3]],[["Câmera",6000],["Lente",2500]],12,400,"Inclua o tempo de edição e entrega no cálculo. Uma hora de ensaio costuma virar três ou quatro horas de trabalho."],
+ diarista:["serv","🧹","Limpeza","Diária de limpeza","diária",[["Produtos de limpeza",80,10],["Transporte",12,1],["Panos e luvas",40,15]],22,480,[["Celular",50],["MEI (DAS)",82]],[["Pix",0]],[["Kit de limpeza",300]],20,200,"Ofereça limpeza pós-obra e pós-mudança. São serviços pontuais que pagam bem mais que a diária comum."],
+ reparos:["serv","🔧","Manutenção e reparos","Visita técnica (instalação simples)","visita",[["Materiais miúdos (fita, conectores)",60,15],["Combustível",20,1]],50,90,[["Celular",60],["MEI (DAS)",82],["Reposição de ferramentas",50]],[["Maquininha de cartão",3]],[["Ferramentas",1500]],40,150,"Cobre uma taxa de visita separada do serviço. Ela cobre o deslocamento mesmo quando o cliente não fecha."],
+ pet:["serv","🐶","Banho e tosa","Banho e tosa porte pequeno","banho",[["Shampoo e condicionador",60,30],["Perfume e laço",30,40],["Toalhas e lavagem",20,20]],25,60,[["Aluguel",800],["Água e energia",250],["MEI (DAS)",82]],[["Maquininha de cartão",3]],[["Soprador",900],["Banheira",700],["Máquina de tosa",500]],120,60,"Plano mensal com 4 banhos garante agenda cheia. Táxi dog pode virar uma receita extra."],
+ branco:["zero","✏️","Começar do zero","","unidade",[["",0,1]],0,0,[["",0]],[["",0]],[["",0]],100,0,"Preencha com os seus números. Comece pelos materiais, depois diga quanto vale sua hora e as contas do mês."]
+};
+const KEY="calc-precificacao-universal-v2";
+let S, catAtiva;
+
+const $=id=>document.getElementById(id);
+const brl=v=>(isFinite(v)?v:0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const brl0=v=>(isFinite(v)?v:0).toLocaleString("pt-BR",{style:"currency",currency:"BRL",maximumFractionDigits:0});
+const int=v=>Math.round(v).toLocaleString("pt-BR");
+const n=s=>{ if(typeof s==="number") return s; s=String(s||"").trim().replace(/[R$\s%]/g,""); if(s.includes(",")) s=s.replace(/\./g,"").replace(",","."); const v=parseFloat(s); return isFinite(v)?v:0; };
+const show=v=>v===0||v===""?"":String(Math.round(v*100)/100).replace(".",",");
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const plural=w=>{w=(w||"unidade").trim(); if(/ão$/i.test(w)) return w.slice(0,-2)+"ões"; if(/[aeiouá]$/i.test(w)) return w+"s"; if(/m$/i.test(w)) return w.slice(0,-1)+"ns"; if(/l$/i.test(w)) return w.slice(0,-1)+"is"; return w+"es";};
+
+function fromPreset(k){
+  const p=A[k];
+  return {area:k,produto:p[3],unidade:p[4],materiais:p[5].map(m=>({n:m[0],p:m[1],r:m[2]})),
+    hora:p[6],min:p[7],fixos:p[8].map(f=>({n:f[0],v:f[1]})),taxas:p[9].map(t=>({n:t[0],v:t[1]})),
+    invest:p[10].map(i=>({n:i[0],v:i[1]})),qtd:p[11],preco:p[12],meta:0};
+}
+function save(){ try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){} }
+function load(){ try{const r=localStorage.getItem(KEY); if(r){const o=JSON.parse(r); if(o&&o.materiais&&A[o.area]) return o;}}catch(e){} return null; }
+
+/* Áreas */
+function renderCats(){
+  $("cats").innerHTML=Object.entries(CATS).map(([k,c])=>`<button class="cat" type="button" data-cat="${k}" style="--cc:${c.cor}" aria-pressed="${catAtiva===k}"><i></i>${c.rot}</button>`).join("");
+  $("cards").innerHTML=Object.entries(A).filter(([,a])=>a[0]===catAtiva).map(([k,a])=>
+    `<button class="card" type="button" data-area="${k}" style="--cc:${CATS[a[0]].cor}" aria-pressed="${S.area===k}"><span class="ico" aria-hidden="true">${a[1]}</span><b>${a[2]}</b><span>${a[3]||"Use os seus próprios números"}</span></button>`).join("");
+}
+document.addEventListener("click",e=>{
+  const c=e.target.closest("[data-cat]");
+  if(c){ catAtiva=c.dataset.cat; renderCats(); return; }
+  const a=e.target.closest("[data-area]");
+  if(a){ S=fromPreset(a.dataset.area); renderAll(true); save(); return; }
+  const ad=e.target.closest("[data-add]");
+  if(ad){ const k=ad.dataset.add; S[k].push(k==="materiais"?{n:"",p:0,r:1}:{n:"",v:0}); renderLista(k); calc(); save();
+    const rows=document.querySelectorAll(`[data-l="${k}"]`); const last=rows[rows.length-1]; if(last) last.querySelector("input").focus(); return; }
+  const d=e.target.closest("[data-del]");
+  if(d){ S[d.dataset.del].splice(+d.dataset.i,1); renderLista(d.dataset.del); calc(); save(); return; }
+  const s=e.target.closest("[data-preco]");
+  if(s&&!s.disabled){ S.preco=Math.ceil(+s.dataset.preco*10)/10; $("preco").value=show(S.preco); ajustarMax(); calc(); save(); return; }
+  const h=e.target.closest("[data-hora]");
+  if(h){ const m={salario:1,"2salarios":2,"3salarios":3}[h.dataset.hora]; S.hora=Math.round(SALARIO*m/176*100)/100; $("hora").value=show(S.hora); calc(); save(); }
+});
+
+/* Listas */
+function field(label,key,val,pre,suf,cls,type){
+  return `<label class="${cls||""}"><span class="lbl">${label}</span><div class="inp">${pre?`<span>${pre}</span>`:""}<input data-k="${key}" ${type==="text"?'type="text" autocomplete="off"':'inputmode="decimal"'} value="${type==="text"?esc(val):show(val)}" placeholder="${type==="text"?"Nome do item":"0"}">${suf?`<span>${suf}</span>`:""}</div></label>`;
+}
+function renderLista(nome){
+  const box=$({materiais:"lista-mat",fixos:"lista-fixos",taxas:"lista-taxas",invest:"lista-invest"}[nome]);
+  box.innerHTML=S[nome].map((it,i)=>{
+    const del=`<button class="del" type="button" data-del="${nome}" data-i="${i}" aria-label="Remover item">×</button>`;
+    if(nome==="materiais"){
+      return `<div class="linha mat" data-l="${nome}" data-i="${i}">${field("Material","n",it.n,"","","f-n","text")}${field("Paguei","p",it.p,"R$","","f-p")}${field("Rende","r",it.r,"","un.","f-r")}<div class="por">por un.<b data-por="${i}">${brl(it.r>0?it.p/it.r:0)}</b></div>${del}</div>`;
+    }
+    const lab={fixos:["Conta","Por mês","R$",""],taxas:["Taxa","Percentual","","%"],invest:["Equipamento","Valor","R$",""]}[nome];
+    return `<div class="linha dois" data-l="${nome}" data-i="${i}">${field(lab[0],"n",it.n,"","","","text")}${field(lab[1],"v",it.v,lab[2],lab[3])}${del}</div>`;
+  }).join("");
+}
+document.addEventListener("input",e=>{
+  const t=e.target, row=t.closest("[data-l]");
+  if(row){
+    const it=S[row.dataset.l][+row.dataset.i], k=t.dataset.k;
+    it[k]= k==="n"? t.value : n(t.value);
+    if(row.dataset.l==="materiais"){ const el=row.querySelector("[data-por]"); if(el) el.textContent=brl(it.r>0?it.p/it.r:0); }
+    calc(); save(); return;
+  }
+  if(t.id==="produto"||t.id==="unidade"){ S[t.id]=t.value; labels(); calc(); save(); return; }
+  if(["hora","min","qtd","meta"].includes(t.id)){ S[t.id]=n(t.value); calc(); save(); return; }
+  if(t.id==="preco"){ S.preco=n(t.value); syncSlider(); calc(true); save(); return; }
+  if(t.id==="slider"){ S.preco=+t.value; $("preco").value=show(S.preco)||"0"; calc(true); save(); }
+});
+$("preco").addEventListener("blur",ajustarMax);
+$("imprimir").addEventListener("click",()=>window.print());
+$("limpar").addEventListener("click",()=>{ S=fromPreset(S.area); renderAll(true); save(); });
+
+function un(){ return (S.unidade||"unidade").trim()||"unidade"; }
+function labels(){
+  document.querySelectorAll(".u-sing").forEach(e=>e.textContent=un());
+  document.querySelectorAll(".u-plur").forEach(e=>e.textContent=plural(un()));
+  $("tag-produto").textContent=S.produto?S.produto:"Seu preço de venda";
+}
+
+/* Cálculo */
+function contas(preco){
+  const mat=S.materiais.reduce((a,m)=>a+(m.r>0?m.p/m.r:0),0);
+  const mo=S.hora/60*S.min;
+  const fixoMes=S.fixos.reduce((a,f)=>a+f.v,0);
+  const qtd=Math.max(0,S.qtd);
+  const fixo=qtd>0?fixoMes/qtd:0;
+  const taxaPct=S.taxas.reduce((a,t)=>a+t.v,0)/100;
+  const invest=S.invest.reduce((a,i)=>a+i.v,0);
+  const p=preco===undefined?S.preco:preco;
+  const custo=mat+mo+fixo, taxa=p*taxaPct, lucro=p-custo-taxa;
+  const minimo=taxaPct<1?custo/(1-taxaPct):Infinity;
+  const contrib=p*(1-taxaPct)-mat-mo; /* o que sobra de cada venda para pagar contas fixas */
+  const pe=contrib>0?fixoMes/contrib:Infinity;
+  return {mat,mo,fixoMes,fixo,taxaPct,invest,custo,preco:p,taxa,lucro,minimo,qtd,contrib,pe};
+}
+const precoMargem=(c,m)=>{const d=1-c.taxaPct-m; return d>0?c.custo/d:NaN;};
+let maxAtual=20;
+function ajustarMax(){
+  const c=contas();
+  const base=Math.max(10,(isFinite(c.minimo)?c.minimo:0)*3,S.preco*1.5);
+  maxAtual=base<50?Math.ceil(base):base<500?Math.ceil(base/10)*10:Math.ceil(base/50)*50;
+  const sl=$("slider"); sl.max=maxAtual; sl.step=maxAtual>200?0.5:0.05;
+  $("slider-max").textContent=brl0(maxAtual);
+  syncSlider();
+}
+function syncSlider(){ $("slider").value=Math.min(S.preco,maxAtual); }
+
+const MARGENS=[[.2,"Econômico","#4C82EE"],[.35,"Recomendado","#22A970"],[.5,"Premium","#A86BE6"]];
+
+function calc(doSlider){
+  const c=contas(), u=un(), up=plural(u);
+  const setT=(id,v)=>{$(id).textContent=v;};
+  setT("t-mat",brl(c.mat)); setT("c-mat",brl(c.mat));
+  setT("t-mo",brl(c.mo)); setT("c-mo",brl(c.mo));
+  setT("t-fixo",brl(c.fixo)); setT("c-fixo",brl0(c.fixoMes)+"/mês"); setT("t-fixo-mes",brl(c.fixoMes));
+  const tp=(c.taxaPct*100).toLocaleString("pt-BR",{maximumFractionDigits:2})+"%";
+  setT("t-taxas",tp); setT("c-taxa",tp);
+  setT("t-invest",brl(c.invest)); setT("c-inv",brl0(c.invest));
+  if(!doSlider && S.preco>maxAtual) ajustarMax();
+
+  // sugestões
+  $("sugestoes").innerHTML=MARGENS.map(([m,nm])=>{
+    const p=precoMargem(c,m), ok=isFinite(p)&&p>0, pr=ok?Math.ceil(p*10)/10:0;
+    return `<button class="sug${ok&&Math.abs(pr-S.preco)<0.051?" ativo":""}" type="button" ${ok?`data-preco="${p}"`:"disabled"}><em>${nm}</em><b>${ok?brl(pr):"—"}</b><span>${m*100}% de lucro</span></button>`;
+  }).join("");
+
+  // margem
+  const marg=c.preco>0?c.lucro/c.preco:-1;
+  const pos=Math.max(0,Math.min(100,marg<0?Math.max(2,10+marg*20):20+marg/0.5*80));
+  $("pin").style.left=pos+"%";
+  $("termo-txt").textContent=c.preco<=0?"—":(marg*100).toLocaleString("pt-BR",{maximumFractionDigits:0})+"% · "+(marg<0?"prejuízo":marg<.15?"apertada":marg<.3?"boa":"excelente");
+
+  const lu=$("r-lucro");
+  lu.textContent=(c.lucro<0?"− ":"")+brl(Math.abs(c.lucro));
+  lu.className="v "+(c.lucro>=0?"pos":"neg");
+  setT("r-lucro-s",`${c.lucro>=0?"de lucro":"de prejuízo"} por ${u}, depois de pagar tudo`);
+  const lm=$("r-lucro-mes"); lm.textContent=brl(c.lucro*c.qtd); lm.className=c.lucro>=0?"pos":"neg";
+  setT("r-fat",brl(c.preco*c.qtd));
+  setT("r-min",isFinite(c.minimo)?brl(c.minimo):"—");
+  setT("r-pe",isFinite(c.pe)?`${int(Math.ceil(c.pe))} ${Math.ceil(c.pe)===1?u:up}`:"preço baixo");
+
+  const av=$("aviso");
+  if(c.preco<=0){ av.className="aviso"; av.textContent=`Coloque um preço ou toque numa sugestão. Para não ter prejuízo, cobre pelo menos ${brl(c.minimo)}.`; }
+  else if(c.lucro<0){ av.className="aviso ruim"; av.textContent=`Neste preço você perde ${brl(-c.lucro)} a cada ${u}. Para empatar vendendo ${int(c.qtd)} por mês, cobre pelo menos ${brl(c.minimo)}.`; }
+  else if(marg<.15){ av.className="aviso"; av.textContent=`Você não perde, mas a margem está apertada: qualquer aumento de custo vira prejuízo. Sobram ${brl(c.lucro*c.qtd)} no mês.`; }
+  else { av.className="aviso ok"; av.textContent=`Vendendo ${int(c.qtd)} ${up} por mês, você fatura ${brl(c.preco*c.qtd)}, recebe ${brl(c.mo*c.qtd)} pelo seu trabalho e ainda sobram ${brl(c.lucro*c.qtd)} de lucro.`; }
+
+  donut(c); cenarios(c); linha(c); meta(c); payback(c);
+}
+
+/* Gráficos */
+function donut(c){
+  const partes=[["Materiais",c.mat,"var(--c-mat)"],["Mão de obra",c.mo,"var(--c-mo)"],["Contas fixas",c.fixo,"var(--c-fixo)"],["Taxas",c.taxa,"var(--c-taxa)"],[c.lucro>=0?"Lucro":"Prejuízo",Math.abs(c.lucro),c.lucro>=0?"var(--c-lucro)":"var(--line)"]];
+  const tot=partes.reduce((a,p)=>a+p[1],0)||1;
+  const R=78, C=2*Math.PI*R; let off=0;
+  const arcs=partes.map(p=>{const len=p[1]/tot*C; const s=`<circle cx="100" cy="100" r="${R}" fill="none" stroke="${p[2]}" stroke-width="30" stroke-dasharray="${Math.max(0,len-1.5)} ${C}" stroke-dashoffset="${-off}" transform="rotate(-90 100 100)"/>`; off+=len; return s;}).join("");
+  const marg=c.preco>0?Math.round(c.lucro/c.preco*100):0;
+  $("donut").innerHTML=`<circle cx="100" cy="100" r="${R}" fill="none" stroke="var(--field)" stroke-width="30"/>${arcs}
+    <text x="100" y="96" text-anchor="middle" font-size="30" font-weight="800" fill="${c.lucro>=0?"var(--profit)":"var(--loss)"}" style="font-family:var(--display)">${marg}%</text>
+    <text x="100" y="118" text-anchor="middle" font-size="12" fill="var(--muted)">${c.lucro>=0?"é lucro":"de prejuízo"}</text>`;
+  $("leg").innerHTML=partes.map(p=>`<li><i style="--c:${p[2]}"></i><span>${p[0]}</span><span>${brl(p[1])}</span><span class="pct">${c.preco>0?Math.round(p[1]/c.preco*100):0}%</span></li>`).join("");
+  $("donut-sub").textContent=c.preco>0?`De cada ${brl(c.preco)} que você recebe:`:"Defina um preço para ver a divisão.";
+}
+function cenarios(c){
+  const dados=MARGENS.map(([m,nm,cor])=>{const p=precoMargem(c,m); return {nm,cor,p,l:isFinite(p)?contas(p).lucro*c.qtd:0};});
+  dados.push({nm:"Seu preço",cor:"var(--sun)",p:c.preco,l:c.lucro*c.qtd});
+  const mx=Math.max(1,...dados.map(d=>Math.abs(d.l)));
+  $("cenarios").style.gridTemplateColumns=`repeat(${dados.length},1fr)`;
+  $("cenarios").innerHTML=dados.map(d=>`<button class="cen" type="button" ${isFinite(d.p)&&d.p>0?`data-preco="${d.p}"`:""} style="--cc:${d.l<0?"var(--loss)":d.cor};border:0;background:none;cursor:pointer;padding:0">
+     <div class="col"><i style="height:${Math.max(4,Math.abs(d.l)/mx*100)}%"></i></div>
+     <div class="val" style="color:${d.l<0?"var(--loss)":"var(--ink)"}">${brl0(d.l)}</div><div class="nm">${d.nm}</div><div class="pr">${isFinite(d.p)?brl(d.p):"—"}</div></button>`).join("");
+}
+function linha(c){
+  const W=760,H=280,L=70,Rm=20,T=20,B=40;
+  const qMax=Math.max(10,c.qtd*1.6,isFinite(c.pe)?c.pe*1.5:0);
+  const f=q=>c.contrib*q-c.fixoMes;
+  const y0=f(0), y1=f(qMax);
+  let yMin=Math.min(0,y0,y1), yMax=Math.max(0,y0,y1); if(yMax-yMin<1){yMax+=1;}
+  const pad=(yMax-yMin)*.1; yMin-=pad; yMax+=pad;
+  const X=q=>L+q/qMax*(W-L-Rm), Y=v=>T+(yMax-v)/(yMax-yMin)*(H-T-B);
+  let g="";
+  for(let i=0;i<=4;i++){const v=yMin+(yMax-yMin)*i/4; g+=`<line x1="${L}" x2="${W-Rm}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-dasharray="3 4"/><text x="${L-8}" y="${Y(v)+4}" text-anchor="end" font-size="11" fill="var(--muted)">${brl0(Math.abs(v)<(yMax-yMin)*0.02?0:v)}</text>`;}
+  for(let i=0;i<=5;i++){const q=qMax*i/5; g+=`<text x="${X(q)}" y="${H-B+18}" text-anchor="middle" font-size="11" fill="var(--muted)">${int(q)}</text>`;}
+  g+=`<text x="${(L+W-Rm)/2}" y="${H-4}" text-anchor="middle" font-size="11" fill="var(--muted)">${plural(un())} vendidas no mês</text>`;
+  g+=`<line x1="${L}" x2="${W-Rm}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--ink)" stroke-width="1.5"/>`;
+  // áreas de prejuízo e lucro
+  const qz=isFinite(c.pe)&&c.pe<qMax?c.pe:null;
+  if(c.contrib>0 && qz!==null){
+    g+=`<polygon points="${X(0)},${Y(0)} ${X(0)},${Y(y0)} ${X(qz)},${Y(0)}" fill="var(--loss)" opacity=".15"/>`;
+    g+=`<polygon points="${X(qz)},${Y(0)} ${X(qMax)},${Y(y1)} ${X(qMax)},${Y(0)}" fill="var(--profit)" opacity=".18"/>`;
+  } else {
+    g+=`<polygon points="${X(0)},${Y(0)} ${X(0)},${Y(y0)} ${X(qMax)},${Y(y1)} ${X(qMax)},${Y(0)}" fill="${y1>=0?"var(--profit)":"var(--loss)"}" opacity=".15"/>`;
+  }
+  g+=`<line x1="${X(0)}" y1="${Y(y0)}" x2="${X(qMax)}" y2="${Y(y1)}" stroke="${c.contrib>0?"var(--profit)":"var(--loss)"}" stroke-width="3" stroke-linecap="round"/>`;
+  if(qz!==null && c.contrib>0){
+    g+=`<line x1="${X(qz)}" x2="${X(qz)}" y1="${T}" y2="${H-B}" stroke="var(--warn)" stroke-dasharray="5 4" stroke-width="1.5"/>
+      <text x="${X(qz)+6}" y="${T+12}" font-size="12" font-weight="700" fill="var(--ink)">Contas pagas: ${int(Math.ceil(qz))}</text>`;
+  }
+  const qa=Math.min(c.qtd,qMax), ya=f(qa);
+  g+=`<circle cx="${X(qa)}" cy="${Y(ya)}" r="7" fill="var(--sun)" stroke="var(--surface)" stroke-width="3"/>
+     <text x="${X(qa)}" y="${Y(ya)+(ya>=0?-14:24)}" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)">Você: ${brl0(ya)}</text>`;
+  $("linha").innerHTML=g;
+  $("pe-sub").textContent= c.contrib<=0 ? "Com este preço, cada venda não cobre nem o material e a mão de obra. Vender mais só aumenta o prejuízo."
+    : `Cada ${un()} deixa ${brl(c.contrib)} para pagar as contas fixas. Com ${int(Math.ceil(c.pe))} ${plural(un())} no mês as contas estão pagas; a partir daí, tudo é lucro.`;
+}
+function meta(c){
+  const alvo=S.meta>0?S.meta:Math.max(0,Math.round(c.lucro*c.qtd/100)*100)||1000;
+  if(!S.meta && document.activeElement!==$("meta")) $("meta").placeholder=show(alvo);
+  const precisa=c.contrib>0?(alvo+c.fixoMes)/c.contrib:Infinity;
+  const prog=isFinite(precisa)&&precisa>0?Math.min(1,c.qtd/precisa):0;
+  const R=62,C=2*Math.PI*R;
+  $("ring").innerHTML=`<svg width="150" height="150" viewBox="0 0 150 150"><circle cx="75" cy="75" r="${R}" fill="none" stroke="var(--field)" stroke-width="14"/><circle cx="75" cy="75" r="${R}" fill="none" stroke="${prog>=1?"var(--profit)":"var(--sun)"}" stroke-width="14" stroke-linecap="round" stroke-dasharray="${C*prog} ${C}"/></svg>
+    <div class="rc"><b>${Math.round(prog*100)}%</b><span>da meta</span></div>`;
+  const u=un(), up=plural(u);
+  if(!isFinite(precisa)){ $("meta-txt").textContent="Com este preço não dá para chegar à meta. Aumente o preço ou reduza os custos."; $("minis").innerHTML=""; return; }
+  const q=Math.ceil(precisa);
+  $("meta-txt").innerHTML=`Para lucrar <strong>${brl(alvo)}</strong> por mês, venda <strong>${int(q)} ${q===1?u:up}</strong>. ${c.qtd>=q?"Você já chega lá com a quantidade atual.":`Faltam ${int(q-c.qtd)} por mês.`}`;
+  $("minis").innerHTML=`<div><b>${int(q)}</b><span>por mês</span></div><div><b>${(q/4.3).toLocaleString("pt-BR",{maximumFractionDigits:q/4.3<10?1:0})}</b><span>por semana</span></div><div><b>${(q/26).toLocaleString("pt-BR",{maximumFractionDigits:q/26<10?1:0})}</b><span>por dia (26 dias)</span></div>`;
+}
+function payback(c){
+  const lm=c.lucro*c.qtd;
+  if(c.invest<=0){ $("pay-bar").style.width="100%"; $("pay-marks").innerHTML=""; $("pay-sub").textContent="Nenhum investimento informado."; $("pay-txt").textContent="Sem equipamentos para pagar, todo o lucro já é seu desde a primeira venda."; return; }
+  if(lm<=0){ $("pay-bar").style.width="0"; $("pay-marks").innerHTML=""; $("pay-sub").textContent=`Investimento de ${brl(c.invest)}.`; $("pay-txt").textContent="Com o lucro atual o investimento não se paga. Ajuste o preço ou a quantidade."; return; }
+  const meses=c.invest/lm, mx=Math.max(12,Math.ceil(meses));
+  $("pay-bar").style.width=Math.min(100,meses/mx*100)+"%";
+  const passos=mx<=12?[0,3,6,9,12]:[0,Math.round(mx/4),Math.round(mx/2),Math.round(mx*3/4),mx];
+  $("pay-marks").innerHTML=passos.map(m=>`<span>${m} ${m===1?"mês":"meses"}</span>`).join("");
+  $("pay-sub").textContent=`Investimento de ${brl(c.invest)} com lucro de ${brl(lm)} por mês.`;
+  const un_=Math.ceil(c.invest/c.lucro);
+  $("pay-txt").innerHTML= meses<1?`O investimento volta <strong>no primeiro mês</strong>, com ${int(un_)} ${plural(un())} vendidas.`
+    :`O investimento volta em <strong>cerca de ${(Math.ceil(meses*10)/10).toLocaleString("pt-BR")} meses</strong>, depois de ${int(un_)} ${plural(un())} vendidas.`;
+}
+
+function renderAll(anim){
+  catAtiva=A[S.area][0];
+  document.documentElement.style.setProperty("--cat",CATS[catAtiva].cor);
+  renderCats();
+  const a=A[S.area];
+  $("dica").innerHTML=`<span class="ico" aria-hidden="true">${a[1]}</span><div><b>Dica para ${a[2].toLowerCase()}</b>${a[13]}</div>`;
+  $("produto").value=S.produto; $("unidade").value=S.unidade;
+  $("hora").value=show(S.hora); $("min").value=show(S.min); $("qtd").value=show(S.qtd);
+  $("meta").value=show(S.meta||0);
+  $("preco").value=show(S.preco)||"0";
+  ["materiais","fixos","taxas","invest"].forEach(renderLista);
+  labels(); ajustarMax(); calc();
+  if(anim){ const e=$("etiqueta"); e.classList.remove("flip"); void e.offsetWidth; e.classList.add("flip"); }
+}
+
+$("n-areas").textContent=Object.keys(A).length-1;
+S=load()||fromPreset("fotoima");
+renderAll(false);
+})();
+</script>
+</body>
+</html>
